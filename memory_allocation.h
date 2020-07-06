@@ -8,7 +8,7 @@
 class Base
 {
 public:
-	Base();
+	Base(){}
 	~Base();
 private:
 	void * operator new[](size_t);
@@ -22,9 +22,9 @@ private:
 class Person : private Base
 {
 public:
-
+	Person(){}
 	Person(char * fullname,unsigned int id,unsigned char age);
-	~Person();
+
 	void * operator new(size_t);
 	void operator delete(void *);
 	void Initialization();

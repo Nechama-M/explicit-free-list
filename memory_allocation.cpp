@@ -2,21 +2,20 @@
 #include <iostream>
 #include <exception>
 
-static const size_t SizeOfMemory = 30;
+static const size_t SizeOfMemory = 10;
 
 
 
 /*Auxiliary function*/
-Person * InitPool()
+inline Person * InitPool()
 {
-	Person * pool = (Person *) ::operator new (sizeof(Person)*SizeOfMemory);
-	return pool;
+	return (Person *) ::operator new (sizeof(Person)*SizeOfMemory);
 }
-Person * InitFreeList()
+inline Person * InitFreeList()
 {
 	Person * freeList = Person::s_pool;
 	Person ** temp;
-	for (size_t i=0; i < SizeOfMemory; i++)
+	for (size_t i=0; i < SizeOfMemory; ++i)
 	{
 		temp = reinterpret_cast<Person **>(freeList);
 		*temp = (freeList+1);
@@ -25,12 +24,15 @@ Person * InitFreeList()
 	freeList = NULL;
 	return Person::s_pool;
 }
-
-bool EndOfMemory()
+Person * getNextBlock(Person * block)
 {
-	return (Person::s_firstFree!=NULL); 
+	return *(Person**)block;
 }
-void ApdateFreeList()
+inline bool EndOfMemory()
+{
+	return (getNextBlock(Person::s_firstFree)==NULL); 
+}
+inline void ApdateFreeList()
 {
 	Person ** temp = reinterpret_cast<Person **>(Person::s_firstFree);
 	Person::s_firstFree = *temp;
@@ -58,15 +60,23 @@ void SetBlockAsAvailable(void * person)
 	Person::s_firstFree = *temp;
 }
 
+
 /*end Auxiliary function*/
 Person* Person::s_pool = InitPool();
 Person* Person::s_firstFree = InitFreeList();
 
 void * Person::operator new(size_t size)
 {
-	Person * block = GetBlock();
-	new (block) Person;
-	return block;
+	if(!EndOfMemory())
+	{
+		Person * block = GetBlock();
+		block = *(Person**)block;
+		return block;
+	}
+	else
+	{
+		throw std::bad_alloc();
+	}
 }
 void Person::operator delete(void * block_to_delete)
 {
